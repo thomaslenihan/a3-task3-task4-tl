@@ -1,5 +1,5 @@
 ---
-title: "a3_task3_thomas_lenihan"
+title: "Task 3: Urchin Size Distributions"
 author: "Thomas Lenihan"
 date: "10/23/2021"
 output: html_document
@@ -11,14 +11,16 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse) 
 library(here)
 library(janitor) 
+library(lubridate)
 library(ggplot2)
-library(kableExtra)#attaching packages, setting up code chunk options
+library(kableExtra)
+#attaching packages, setting up code chunk options
 
 ```
 
 ## Read in the data
 
-```{r}
+```{r, message = FALSE}
 urchins <- read_csv(here("data", "urchins.csv")) %>% 
   clean_names() #put titles in lower snake case
 
@@ -26,7 +28,7 @@ urchins <- read_csv(here("data", "urchins.csv")) %>%
 
 ## Data visualization
 
-### Size Distribution Histogram
+### Size distribution histogram
 Comparing the distribution of sizes between purple and red urchins
 ```{r}
 ggplot(data = urchins,
@@ -39,11 +41,11 @@ ggplot(data = urchins,
        y = "frequency") #add axis titles and labels
 
 ```
-*Figure 1. Distribution of Urchin Sizes by Species.* This figure shows the differences in size distribution across populations of Purple and Red Urchins.Sizes are the diameter of each urchin in centimeters, and are rounded to the nearest 0.5 cm. 
+**Figure 1. Distribution of Urchin Sizes by Species.** This figure shows the differences in size distribution across populations of Purple and Red Urchins.Sizes are the diameter of each urchin in centimeters, and are rounded to the nearest 0.5 cm. 
 
-### Urchin Size Statistics Table
+### Urchin size statistics table
 
-*Table 1. Descriptive Statistics of Urchin Sizes.* Sizes of Purple and Red Urchins were measured as the diameter of each individual in centimeters. mean, median, standard deviation, and sample size for each species are shown below. 
+**Table 1. Descriptive Statistics of Urchin Sizes.** Sizes of Purple and Red Urchins were measured as the diameter of each individual in centimeters. mean, median, standard deviation, and sample size for each species are shown below. 
 ```{r}
 
 urchin_size_stats <- urchins %>% #create a new data frame which will become the stats table
@@ -63,8 +65,36 @@ urchin_size_stats %>%
 #create a table to show summary stats using kableExtra
 ```
 
+The above histograms and table describe the size distributions of Red and Purple Urchins, and show a few key differences between the populations. Red urchins appear to be normally distributed, while the size distribution of the Purple Urchins is positively skewed. The means of the two groups differ by 41%, or 2.3 cm.  The differences between the standard deviation of the Red Urchins (1.89 cm) and the Purple Urchins (1.18 cm) can be seen in the histogram: the size distribution of the Red Urchins has a larger spread than that of the Purple Urchins. 
+
+## Table of Purple Urchin counts by site and year 
 
 ```{r}
+purple_urchins <- urchins %>% 
+  filter(common_name == "Purple Urchin") %>% #filter for "Purple Urchin"
+  mutate(date = mdy(date)) %>% # create date class
+  mutate(year = year(date)) %>% # create a column with only year
+  mutate(site_full = case_when(# Add a new column site_full, which contains... 
+    site == "NAPL" ~ "Naples Reef", # "Naples Reef" if site NAPL
+    site == "AQUE" ~ "Arroyo Quemado Reef", # "Arroyo Quemado Reef" if site is AQUE
+    site == "CARP" ~ "Carpenteria Reef", # "Carpenteria Reef" if site is CARP
+    site == "IVEE"~ "Isla Vista Reef", # "Isla Vista Reef" if site is IVEE
+    site == "MOHK" ~ "Mohawk Reef", # "Mohawk Reef" if site is MOHK
+  )
+  )
+purple_urchins_table <- purple_urchins %>% 
+  group_by(year, site_full) %>% #create a table, group by year and site
+  summarize(sample_size = n())
 
+```
+
+## Plot of Purple Urchin site populations over time
+
+```{r}
+ggplot(data = purple_urchins_table, 
+       aes(x = year, y = sample_size)) +
+  geom_col( fill = "lavender", color = "black", binwidth = 2 ) +
+  facet_grid(cols = vars(site_full)) 
+  
 ```
 
