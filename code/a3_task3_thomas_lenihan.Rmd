@@ -2,8 +2,16 @@
 title: "Task 3: Urchin Size Distributions"
 author: "Thomas Lenihan"
 date: "10/23/2021"
-output: html_document
+output: 
+  html_document: 
+    toc: yes
+    theme: readable
+    number_sections: no
+    code_folding: hide
 ---
+
+**Citation:** Reed, D. 2020. SBC LTER: Reef: Long-term experiment: Kelp removal: Urchin size frequency distribution ver 20. Environmental Data Initiative. https://doi.org/10.6073/pasta/5a1e9ef03aa47bd2225c0bb98a02a63b
+
 ## Setup 
 
 ```{r setup, include=FALSE, warning = FALSE, message = FALSE}
@@ -18,9 +26,9 @@ library(kableExtra)
 
 ```
 
-## Read in the data
+### Read in the data
 
-```{r, message = FALSE}
+```{r, message = FALSE, warning = FALSE}
 urchins <- read_csv(here("data", "urchins.csv")) %>% 
   clean_names() #put titles in lower snake case
 
@@ -29,8 +37,9 @@ urchins <- read_csv(here("data", "urchins.csv")) %>%
 ## Data visualization
 
 ### Size distribution histogram
-Comparing the distribution of sizes between purple and red urchins
-```{r}
+The figure and table below compares the distribution of sizes between purple and red urchins.
+
+```{r, message = FALSE, warning = FALSE}
 ggplot(data = urchins,
        aes(x = size)) +
   geom_histogram(binwidth = 0.9, color = "black", fill = "white") + 
@@ -39,14 +48,16 @@ ggplot(data = urchins,
   labs(title = "Urchin Size Distributions By Species",
        x = "Size (cm)",
        y = "frequency") #add axis titles and labels
-
 ```
-**Figure 1. Distribution of Urchin Sizes by Species.** This figure shows the differences in size distribution across populations of Purple and Red Urchins.Sizes are the diameter of each urchin in centimeters, and are rounded to the nearest 0.5 cm. 
 
-### Urchin size statistics table
+
+**Figure 1. Distribution of Urchin Sizes by Species.** This figure shows the differences in size distribution across populations of Purple and Red Urchins. Urchin sizes were measured as the diameter of each urchin in centimeters, and are rounded to the nearest 0.5 cm. 
+
+### Urchin summary statistics table
 
 **Table 1. Descriptive Statistics of Urchin Sizes.** Sizes of Purple and Red Urchins were measured as the diameter of each individual in centimeters. mean, median, standard deviation, and sample size for each species are shown below. 
-```{r}
+
+```{r, message = FALSE, warning = FALSE}
 
 urchin_size_stats <- urchins %>% #create a new data frame which will become the stats table
   group_by(common_name) %>% #organize by spp
@@ -56,20 +67,23 @@ urchin_size_stats <- urchins %>% #create a new data frame which will become the 
             sample_size = n()) #create summary statistics 
 
 urchin_size_stats %>% 
-  kable(col.names = c("Urchin Species", 
+ #create a table to show summary stats using kableExtra
+   kable(col.names = c("Urchin Species", 
                       "Mean size (cm)", 
                       "Median size (cm)",
                       "Standard Deviation (cm)",
                       "Sample size (n)")) %>% 
   kable_styling(full_width = FALSE)
-#create a table to show summary stats using kableExtra
+
 ```
 
 The above histograms and table describe the size distributions of Red and Purple Urchins, and show a few key differences between the populations. Red urchins appear to be normally distributed, while the size distribution of the Purple Urchins is positively skewed. The means of the two groups differ by 41%, or 2.3 cm.  The differences between the standard deviation of the Red Urchins (1.89 cm) and the Purple Urchins (1.18 cm) can be seen in the histogram: the size distribution of the Red Urchins has a larger spread than that of the Purple Urchins. 
 
-## Table of Purple Urchin counts by site and year 
+### Table of Purple Urchin counts by site and year 
 
-```{r}
+This section compares Purple Urchin population sizes from 2008-2020 at different sites within the Santa Barbara Coastal LTER. 
+
+```{r,message = FALSE, warning = FALSE}
 purple_urchins <- urchins %>% 
   filter(common_name == "Purple Urchin") %>% #filter for "Purple Urchin"
   mutate(date = mdy(date)) %>% # create date class
@@ -88,13 +102,27 @@ purple_urchins_table <- purple_urchins %>%
 
 ```
 
-## Plot of Purple Urchin site populations over time
+#### Plot of Purple Urchin site populations over time
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
+#create a ggplot of sample_size by year
 ggplot(data = purple_urchins_table, 
        aes(x = year, y = sample_size)) +
-  geom_col( fill = "lavender", color = "black", binwidth = 2 ) +
-  facet_grid(cols = vars(site_full)) 
+  geom_col( fill = "lavender", color = "black") +
+  #separate populations by site using facet_grid
+  facet_grid(cols = vars(site_full)) +
+  #add axis labels and title
+  labs(x = "Year",
+       y = "Population Size",
+       title = "Purple Urchin Populations by Site, 2008 - 2020")+
+  #adjust the centering of the plot title
+  theme(plot.title = element_text(size =12, hjust = -0.1))
   
 ```
+
+**Figure 2. Population Estimates of Purple Urchins across Reefs Within the Santa Barbara Coastal LTER. ** Population sizes of Purple Urchins were estimated from yearly samples taken by the Santa Barbara Coastal Long Term Ecological Research program. The data shown are the population estimates from 2008-2020 at five study sites. For one site, Isla Vista Reef, data were not available prior to 2012 and the initial portion of the graph (2008-2012) is left blank. 
+
+Figure 2 charts the changes in Purple Urchin population size across five reefs within the Santa Barbara Coastal LTER. The significant drop in population size across all of the reefs that occurred between 2012 and 2013 is striking, but a number of factors could contribute to this trend. Most importantly, it is necessary to account for any experimental manipulations being performed the study site during the years when the data were collected. If habitat or food resources for the Purple Urchins were altered or reduced, for example, this could dramatically impact Urchin population sizes and produce the trend seen in Figure 2. The scope and size of sampling could also have influenced population estimates: if the site sizes were reduced in area, a population could appear much smaller than it actually is. Accounting for the consistency of the methods and the time of year the counts were taken are also important factors to take into account. 
+
+
 

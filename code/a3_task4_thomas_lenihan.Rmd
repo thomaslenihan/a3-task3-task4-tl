@@ -1,0 +1,93 @@
+---
+title: "Task 4: Visualizing the Effects of Kelp Removal on Purple Urchin Populations"
+author: "Thomas Lenihan"
+date: "10/29/2021"
+output: 
+  html_document: 
+    toc: yes
+    theme: readable
+    number_sections: no
+    code_folding: hide
+---
+
+**Citation:** Reed, D. 2020. SBC LTER: Reef: Long-term experiment: Kelp removal: Urchin size frequency distribution ver 20. Environmental Data Initiative. https://doi.org/10.6073/pasta/5a1e9ef03aa47bd2225c0bb98a02a63b
+
+## Setup 
+
+```{r setup, include=FALSE, warning = FALSE, message = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse) 
+library(here)
+library(janitor) 
+library(lubridate)
+library(ggplot2)
+library(kableExtra)
+#attaching packages, setting up code chunk options
+
+```
+
+### Read in the data
+
+```{r, message = FALSE, warning = FALSE}
+urchins <- read_csv(here("data", "urchins.csv")) %>% 
+  clean_names() #put titles in lower snake case
+
+```
+
+## Data wrangling
+
+```{r, message = FALSE, warning = FALSE}
+average_urchin_size_naples <- urchins %>%
+  group_by(common_name) %>% #organize by spp and site
+  mutate(date = mdy(date)) %>% # create date class with lubridate
+  mutate(year = year(date)) %>% 
+ # Add a new column site_full, which contains...  mutate(site_full = case_when(
+   mutate(site_full = case_when(
+          site == "NAPL" ~ "Naples Reef")) %>% 
+   filter(site_full == "Naples Reef", 
+          year == "2010",
+          common_name == "Purple Urchin")
+  #create a variable for the mean size of urchins by species
+
+```
+
+## Data exploration
+
+```{r, message = FALSE, warning = FALSE}
+ggplot(average_urchin_size_naples, aes(sample = size,
+                                       ))+
+  geom_qq()+
+  facet_grid(~ treatment)
+```
+
+```{r, message = FALSE, warning = FALSE}
+ggplot(data = average_urchin_size_naples,
+       aes(x = size)) +
+  geom_histogram(binwidth = 0.5, color = "black", fill = "white") + 
+  # create a histogram with binwidth 1, to show the pattern of size distribution
+  facet_grid(cols = vars(treatment))
+```
+
+Based on the QQ-plot and histogram, the two treatment groups do not appear to differ significantly in population size. This early exploration of the data suggest that the annual kelp removal did not have a significant effect on Purple Urchin population sizes. This sample only covers the Purple Urchin populations at Naples Reef in 2010, and thus should not be generalized across larger timescales or populations.  
+
+**Table 1. Purple Urchin population size summary statistics. ** The table below shows several summary statistics of the Purple Urchin populations in the control and annual treatment groups at Naples Reef in 2010. The treatment group (annual) consisted of urchin populations that inhabited areas that researchers conducted annual kelp removal. 
+
+```{r, message = FALSE, warning = FALSE}
+urchin_size_stats <- urchins %>% #create a new data frame which will become the stats table
+  group_by(treatment) %>% #organize by spp
+  summarize(mean_mass_g = mean(size, na.rm = TRUE),
+            median = median(size, na.rm = TRUE),
+            sd = sd(size, na.rm = TRUE),
+            sample_size = n()) #create summary statistics 
+
+urchin_size_stats %>% 
+ #create a table to show summary stats using kableExtra
+   kable(col.names = c("Treatment", 
+                      "Mean size (cm)", 
+                      "Median size (cm)",
+                      "Standard Deviation (cm)",
+                      "Sample size (n)")) %>% 
+  kable_styling(full_width = FALSE)
+
+```
+
